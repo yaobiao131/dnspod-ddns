@@ -6,6 +6,6 @@ WORKDIR /app
 
 ADD . /app
 
-RUN "pip install -r requirement.txt"
+RUN "pip install -r requirements.txt"
 
 ENTRYPOINT ["python", "ddns.py"]
