@@ -1,3 +1,4 @@
+import json
 import re
 import logging
 import socket
@@ -15,18 +16,18 @@ regex_ip = re.compile(
 
 # 增强鲁棒性，用多种方式获取 IP
 def get_ip():
-    return (get_ip_by_ipip()
+    return (get_ip_by_myip()
             or get_ip_by_httpbin()
-            or get_ip_by_httpbin_direct_1()
-            or get_ip_by_httpbin_direct_2())
+            or get_ip_by_icanhazip()
+            or get_ip_by_ipify())
 
 
 # 这几个函数会在 DNS 遭受污染时失效
-def get_ip_by_ipip():
-    url = 'http://myip.ipip.net/'
+def get_ip_by_myip():
+    url = 'https://api.my-ip.io/ip'
     try:
         resp = request.urlopen(url=url, timeout=10).read()
-        return regex_ip.match(resp.decode("utf-8")).group(1)
+        return resp.decode("utf-8")
     except Exception as e:
         logging.warning("get_ip_by_ipip FAILED, error: %s", str(e))
         return None
@@ -42,33 +43,28 @@ def get_ip_by_httpbin():
         return None
 
 
-# 这个函数可以在本地 DNS 遭受污染的时候获取到IP
-# 如需模拟DNS污染，可以在HOSTS文件里加入 127.0.0.1 www.httpbin.org
-def get_ip_by_httpbin_direct_1():
-    url = 'http://52.5.182.176/ip'
+def get_ip_by_ipify():
+    url = 'https://api.ipify.org?format=json'
     try:
-        req = request.Request(url=url, method='GET', headers={'Host': 'www.httpbin.org'})
-        resp = request.urlopen(req).read()
-        return regex_ip.match(resp.decode("utf-8")).group(1)
+        resp = request.urlopen(url=url, timeout=10).read()
+        return json.loads(resp.decode('utf-8'))['ip']
     except Exception as e:
-        logging.warning("get_ip_by_httpbin_direct_1 FAILED, error: %s", str(e))
+        logging.warning("get_ip_by_ipify FAILED, error: %s", str(e))
         return None
 
 
-def get_ip_by_httpbin_direct_2():
-    url = 'http://52.44.230.61/ip'
+def get_ip_by_icanhazip():
+    url = 'https://icanhazip.com'
     try:
-        req = request.Request(url=url, method='GET', headers={'Host': 'www.httpbin.org'})
-        resp = request.urlopen(req).read()
-        return regex_ip.match(resp.decode("utf-8")).group(1)
+        resp = request.urlopen(url=url, timeout=10).read()
+        return resp.decode('utf-8')
     except Exception as e:
-        logging.warning("get_ip_by_httpbin_direct_2 FAILED, error: %s", str(e))
+        logging.warning("get_ip_by_ipify FAILED, error: %s", str(e))
         return None
 
 
 # 测试
 if __name__ == '__main__':
     print(get_ip())
-    print(get_ip_by_ipip())
+    print(get_ip_by_myip())
     print(get_ip_by_httpbin())
-    print(get_ip_by_httpbin_direct_1())
